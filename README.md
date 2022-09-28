@@ -2,7 +2,7 @@ Simple Ruby app deploy.
 
 A .vault_password file should be created in the project root directory.
 
-Download reqiurements:
+Download requirements:
 
 `ansible-galaxy install -r requirements.yml`
 
