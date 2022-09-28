@@ -6,20 +6,15 @@
     name:     
       - nginx
 
-# - name: Set nginx config
-#   template:
-#     src: ./templates/nginx.j2
-#     dest: /etc/nginx/conf.d/ruby-app.conf
-
-- name: "Copy nginx config"
+- name: Copy nginx config
   ansible.builtin.copy:
-    src: files/ruby-app.conf
-    dest: /etc/nginx/conf.d/ruby-app.conf
+    src: files/nginx.conf
+    dest: /etc/nginx/nginx.conf
     owner: root
     group: root
     mode: 0644
 
-- name: Restart nginx after configure
-  service:
+- name: Restart nginx with new config
+  ansible.builtin.service:
     name: nginx
     state: restarted

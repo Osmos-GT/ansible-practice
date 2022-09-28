@@ -22,7 +22,7 @@
        - mc
        - ca-certificates
 
-- name: "Create app folder and modify folder permissions"
+- name: Create app folder and modify folder permissions
   become: true
   ansible.builtin.file:
     path: ~/apps/ruby-app

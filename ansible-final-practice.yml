@@ -2,7 +2,7 @@
 # Ruby app on CentOS
 ##################################################
 ---
-- name: Basic group
+- name: Ruby app server
   hosts: centos
   vars_files:
     - passwd.yml
