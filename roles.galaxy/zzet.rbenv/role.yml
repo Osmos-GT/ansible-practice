@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  remote_user: root
+  vars_files:
+    - 'vars/main.yml'
+    - 'defaults/main.yml'
+  tasks:
+    - import_tasks: 'tasks/main.yml'
+    - name: "Ansible | Print a variable"
+      debug:
+        msg: "The operating system is {{ rbenv.env }}"
+  handlers:
+    - import_tasks: 'handlers/main.yml'

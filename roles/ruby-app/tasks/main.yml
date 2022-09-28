@@ -1,0 +1,100 @@
+---
+- name: Add epel-release repo
+  become: true
+  ansible.builtin.yum:
+    state: latest
+    update_cache: yes
+    name:     
+      - epel-release
+
+- name: Install Ruby app deps via yum
+  become: true
+  ansible.builtin.yum:
+    state: latest
+    update_cache: yes
+    name:
+       - "@Development Tools"
+       - libxml2-devel
+       - libxslt-devel
+       - libpqxx-devel
+       - git
+       - nodejs
+       - mc
+       - ca-certificates
+
+- name: "Create app folder and modify folder permissions"
+  become: true
+  ansible.builtin.file:
+    path: ~/apps/ruby-app
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: 0777
+
+- name: Clone private Slurm repo
+  ansible.builtin.git:
+    repo: "https://{{ gitlabuser | urlencode }}:{{ gitlabpassword | urlencode }}@gitlab.slurm.io/edu/xpaste_practicum.git"
+    dest: ~/apps/ruby-app
+
+# - name: Gem update to system 3.2.3
+#   ansible.builtin.shell:
+#     gem update --system 3.2.3
+#   args:
+#     chdir: /home/vagrant/apps/ruby-app
+
+# - name: Gem install bundler
+#   ansible.builtin.shell:
+#     gem install bundler:1.16.2
+#   args:
+#     chdir: /home/vagrant/apps/ruby-app
+
+- name: Gem install listen
+  ansible.builtin.shell:
+    gem install listen
+  args:
+    chdir: /home/vagrant/apps/ruby-app
+
+- name: Bundle config && install
+  ansible.builtin.shell:
+    bundle config build.nokogiri --use-system-libraries
+    bundle install --clean --no-cache --without development
+  args:
+    chdir: /home/vagrant/apps/ruby-app
+
+- name: Bundle install
+  ansible.builtin.shell:
+    bundle install
+  args:
+    chdir: /home/vagrant/apps/ruby-app
+  ignore_errors: yes
+
+- name: Setting up credentials
+  ansible.builtin.shell:
+    EDITOR="vim --nofork" bin/rails credentials:edit
+  args:
+    chdir: /home/vagrant/apps/ruby-app
+
+- name: Disable SELinux
+  become: yes
+  ansible.builtin.shell:
+    setenforce 0
+
+- name: Modify /run permissions
+  become: yes
+  ansible.builtin.shell:
+    chmod 777 /run
+
+- name: Copy systemd service file
+  become: yes
+  ansible.builtin.copy:
+    src: files/ruby-app.service
+    dest: /etc/systemd/system/ruby-app.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Start Ruby-app service
+  become: yes
+  service:
+    name: ruby-app
+    state: started

@@ -1,0 +1,25 @@
+---
+- name: Install nginx
+  ansible.builtin.yum:
+    state: latest
+    update_cache: yes
+    name:     
+      - nginx
+
+# - name: Set nginx config
+#   template:
+#     src: ./templates/nginx.j2
+#     dest: /etc/nginx/conf.d/ruby-app.conf
+
+- name: "Copy nginx config"
+  ansible.builtin.copy:
+    src: files/ruby-app.conf
+    dest: /etc/nginx/conf.d/ruby-app.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart nginx after configure
+  service:
+    name: nginx
+    state: restarted

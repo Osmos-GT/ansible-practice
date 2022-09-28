@@ -1,0 +1,61 @@
+- name: "Install PostgreSQL and psycopg2 via yum"
+  ansible.builtin.yum:
+    update_cache: yes
+    state: latest
+    name:
+      - postgresql-server
+      - postgresql
+      - python-psycopg2
+      - python-ipaddress
+
+- name: "Find out if PostgreSQL is initialized"
+  ansible.builtin.stat:
+    path: "/var/lib/pgsql/data/pg_hba.conf"
+  register: postgres_data
+
+- name: "Initialize PostgreSQL"
+  ansible.builtin.shell: 'postgresql-setup initdb'
+  when: not postgres_data.stat.exists
+
+- name: "Start and enable PostgreSQL via systemd"
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: "Create app database"
+  community.postgresql.postgresql_db:
+    state: present
+    name: "{{ DB_NAME }}"
+  become_user: postgres
+
+- name: "Create db user"
+  community.postgresql.postgresql_user:
+    state: present
+    name: "{{ DB_USER }}"
+    password: "{{ DB_PASSWORD }}"
+  become_user: postgres
+
+- name: "Grant db user access to app db"
+  community.postgresql.postgresql_privs:
+    type: database
+    database: "{{ DB_NAME }}"
+    roles: "{{ DB_USER }}"
+    grant_option: no
+    privs: all
+  become_user: postgres
+
+- name: "Allow md5 connection for the db user"
+  community.postgresql.postgresql_pg_hba:
+    dest: "/var/lib/pgsql/data/pg_hba.conf"
+    contype: host
+    databases: all
+    method: md5
+    users: "{{ DB_USER }}"
+    create: true
+  become_user: postgres
+
+- name: "Restart PostgreSQL via systemd"
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted

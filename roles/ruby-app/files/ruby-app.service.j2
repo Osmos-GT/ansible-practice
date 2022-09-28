@@ -1,0 +1,12 @@
+[Unit]
+Description=Ruby app service
+After=network.target
+
+[Service]
+Type=simple
+User=vagrant
+WorkingDirectory=/home/vagrant/apps/ruby-app
+ExecStart=/bin/bash -lc 'DB_USER={{ DB_USER }} DB_PASSWORD={{ DB_PASSWORD }} DB_NAME={{ DB_NAME }} DB_USER={{ DB_USER }} DB_PASSWORD={{ DB_PASSWORD }} bundle exec rake db:migrate && bundle exec puma -b unix:/var/run/puma.sock -e $RAILS_ENV config.ru'
+
+[Install]
+WantedBy=multi-user.target

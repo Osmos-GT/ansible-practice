@@ -1,0 +1,26 @@
+##################################################
+# Ruby app on CentOS
+##################################################
+---
+- name: Basic group
+  hosts: centos
+  vars_files:
+    - passwd.yml
+    - vars/main.yml
+  
+  roles:
+    - role: zzet.rbenv
+      vars:
+        rbenv:
+          env: user
+          version: v1.0.0
+          default_ruby: 2.6.10
+          rubies:
+            - version: 2.6.10
+      rbenv_users:
+        - vagrant
+    - role: postgresql
+      become: yes
+    - ruby-app
+    - role: nginx
+      become: yes
