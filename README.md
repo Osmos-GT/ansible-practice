@@ -1,4 +1,4 @@
-Simple Ruby app deploy.
+# SLURM ansible practice
 
 A .vault_password file should be created in the project root directory.
 
