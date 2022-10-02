@@ -2,8 +2,6 @@
 
 A simple Ruby app with nginx and PostgreSQL.
 
-A .vault_password file should be created in the project root directory.
-
 Create `.vault_password` file in the project root directory containing your credentials:
 ```
 my_centos_sudo_pass: <pass>
