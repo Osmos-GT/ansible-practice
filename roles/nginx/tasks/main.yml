@@ -13,8 +13,5 @@
     owner: root
     group: root
     mode: 0644
-
-- name: Restart nginx with new config
-  ansible.builtin.service:
-    name: nginx
-    state: restarted
+  notify: Restart nginx
+  tags: nginx

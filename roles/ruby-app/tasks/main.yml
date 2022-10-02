@@ -1,6 +1,6 @@
 ---
 - name: Add epel-release repo
-  become: true
+  become: yes
   ansible.builtin.yum:
     state: latest
     update_cache: yes
@@ -8,7 +8,7 @@
       - epel-release
 
 - name: Install Ruby app deps via yum
-  become: true
+  become: yes
   ansible.builtin.yum:
     state: latest
     update_cache: yes
@@ -19,70 +19,107 @@
        - libpqxx-devel
        - git
        - nodejs
+       - policycoreutils-python
        - mc
-       - ca-certificates
-
-- name: Create app folder and modify folder permissions
-  become: true
+      
+- name: Create ruby-app folder
+  become: yes
   ansible.builtin.file:
     path: ~/apps/ruby-app
     state: directory
     owner: vagrant
     group: vagrant
     mode: 0777
+  tags: git
 
-- name: Clone private Slurm repo
+- name: Clone Slurm repo
   ansible.builtin.git:
     repo: "https://{{ gitlabuser | urlencode }}:{{ gitlabpassword | urlencode }}@gitlab.slurm.io/edu/xpaste_practicum.git"
-    dest: ~/apps/ruby-app
+    dest: /home/vagrant/apps/ruby-app
+  notify: Restart ruby-app service
+  tags: git
 
-- name: Gem install listen
-  ansible.builtin.shell:
-    gem install listen
-  args:
-    chdir: /home/vagrant/apps/ruby-app
+- name: Create .bundle dir if it does not exist
+  ansible.builtin.file:
+    path: /home/vagrant/.bundle
+    state: directory
+    mode: '0755'
+  tags: bundle
 
-- name: Bundle config && install
-  ansible.builtin.shell:
-    bundle config build.nokogiri --use-system-libraries
-    bundle install --clean --no-cache --without development
-  args:
-    chdir: /home/vagrant/apps/ruby-app
+- name: Check that bundle config file exists
+  ansible.builtin.stat:
+    path: /home/vagrant/.bundle/config
+  register: conf_file
+  tags: bundle
+
+- name: Copy bundle config as it doesn't exist already
+  ansible.builtin.copy:
+    src: files/bundle_config
+    dest: /home/vagrant/.bundle/config
+    owner: vagrant
+    group: vagrant
+    mode: 0644
+  when: not conf_file.stat.exists
+  tags: bundle
+
+- name: Add a line to a file if the file does not exist, without passing regexp
+  ansible.builtin.lineinfile:
+    path: /home/vagrant/.bundle/config
+    line: 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries"'
+    create: yes
+  when: conf_file.stat.exists
+  tags: bundle
+
+
+# - name: Ensure bundle clean in ruby-app dir is set to false 
+#   ansible.builtin.lineinfile:
+#     path: /home/vagrant/apps/ruby-app/.bundle/config
+#     regexp: '^BUNDLE_CLEAN='
+#     line: 'BUNDLE_CLEAN: "false"'
+#   tags: bundle
+
+# - name: Bundle config
+#   ansible.builtin.shell:
+#     bundle config build.nokogiri --use-system-libraries
+#   args:
+#     chdir: /home/vagrant/apps/ruby-app
+
 
 - name: Bundle install
-  ansible.builtin.shell:
-    bundle install
-  args:
-    chdir: /home/vagrant/apps/ruby-app
-  ignore_errors: yes
+  community.general.bundler:
+    state: present
+    exclude_groups: development
+#    clean: yes
+    gemfile: /home/vagrant/apps/ruby-app/Gemfile
+  tags: bundle
 
-- name: Setting up credentials
-  ansible.builtin.shell:
-    EDITOR="vim --nofork" bin/rails credentials:edit
-  args:
-    chdir: /home/vagrant/apps/ruby-app
-
-- name: Disable SELinux
+# - name: Bundle install
+#   ansible.builtin.shell:
+#     bundle install --clean --no-cache --without development
+#   args:
+#     chdir: /home/vagrant/apps/ruby-app
+#   ignore_errors: yes
+  
+- name: Change the httpd_t domain to permissive
   become: yes
-  ansible.builtin.shell:
-    setenforce 0
+  community.general.selinux_permissive:
+    name: httpd_t
+    permissive: true
+  tags: selinux
 
 - name: Modify /run permissions
-  become: yes
+  become: true
   ansible.builtin.shell:
     chmod 777 /run
 
 - name: Copy systemd service file
   become: yes
   ansible.builtin.template:
-    src: files/ruby-app.service.j2
+    src: templates/ruby-app.service.j2
     dest: /etc/systemd/system/ruby-app.service
     owner: root
     group: root
     mode: 0644
-
-- name: Start Ruby-app service
-  become: yes
-  service:
-    name: ruby-app
-    state: started
+  notify: Restart ruby-app service
+  tags: systemd
+  

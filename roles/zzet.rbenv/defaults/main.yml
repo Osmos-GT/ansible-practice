@@ -1,7 +1,7 @@
 ---
 rbenv:
   env: system
-  version: v1.0.0
+  version: v1.2.0
   default_ruby: 2.4.2
   rubies:
     - version: 2.4.2
@@ -23,7 +23,7 @@ rbenv_root: "{% if rbenv.env == 'system' %}/usr/local/rbenv{% else %}~/.rbenv{% 
 
 rbenv_set_vars: true
 
-rbenv_users: []
+rbenv_users: [vagrant]
 
 rbenv_extra_depends: []
 rbenv_apt_packages:

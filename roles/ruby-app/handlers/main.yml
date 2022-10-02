@@ -1,0 +1,8 @@
+---
+- name: Restart ruby-app service
+  become: yes
+  ansible.builtin.systemd:
+    name: ruby-app
+    state: restarted
+    enabled: yes
+    daemon_reload: yes

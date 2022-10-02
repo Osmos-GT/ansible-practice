@@ -1,3 +1,4 @@
 passwd.yml
 .vault_password
+.directory
 .vagrant/
