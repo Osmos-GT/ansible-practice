@@ -4,12 +4,13 @@ A simple Ruby app with nginx and PostgreSQL.
 
 A .vault_password file should be created in the project root directory.
 
-Download requirements:
-
+Create `.vault_password` file in the project root directory containing your credentials:
 ```
-ansible-galaxy install -r requirements.yml
+my_centos_sudo_pass: <pass>
+my_centos7_sudo_pass: <pass>
+gitlabuser: <pass>
+gitlabpassword: <pass>
 ```
-Create `.vault_password` file in the project root directory containing ssh password for the remote server.
 
 Then start ansible playbook like this:
 
