@@ -19,9 +19,13 @@
             - version: 2.6.10
       rbenv_users:
         - vagrant
+      tags: rbenv
     - role: postgresql
       become: yes
-    - ruby-app
+      tags: postgresql
+    - role: ruby-app
+      tags: ruby
     - role: nginx
       become: yes
+      tags: nginx
 

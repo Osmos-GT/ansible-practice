@@ -3,8 +3,7 @@
   ansible.builtin.yum:
     state: latest
     update_cache: yes
-    name:     
-      - nginx
+    name: nginx
 
 - name: Copy nginx config
   ansible.builtin.copy:
@@ -14,4 +13,3 @@
     group: root
     mode: 0644
   notify: Restart nginx
-  tags: nginx

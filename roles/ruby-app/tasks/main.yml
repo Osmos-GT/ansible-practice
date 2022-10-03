@@ -1,26 +1,16 @@
 ---
-- name: Add epel-release repo
-  become: yes
-  ansible.builtin.yum:
-    state: latest
-    update_cache: yes
-    name:     
-      - epel-release
+- name: Include variable with package names
+  include_vars:
+    file: vars/deps.yml
+  tags: yum  
 
 - name: Install Ruby app deps via yum
   become: yes
   ansible.builtin.yum:
     state: latest
     update_cache: yes
-    name:
-       - "@Development Tools"
-       - libxml2-devel
-       - libxslt-devel
-       - libpqxx-devel
-       - git
-       - nodejs
-       - policycoreutils-python
-       - mc
+    name: "{{ packages }}"
+  tags: yum
       
 - name: Create ruby-app folder
   become: yes
@@ -39,66 +29,8 @@
   notify: Restart ruby-app service
   tags: git
 
-- name: Create .bundle dir if it does not exist
-  ansible.builtin.file:
-    path: /home/vagrant/.bundle
-    state: directory
-    mode: '0755'
-  tags: bundle
-
-- name: Check that bundle config file exists
-  ansible.builtin.stat:
-    path: /home/vagrant/.bundle/config
-  register: conf_file
-  tags: bundle
-
-- name: Copy bundle config as it doesn't exist already
-  ansible.builtin.copy:
-    src: files/bundle_config
-    dest: /home/vagrant/.bundle/config
-    owner: vagrant
-    group: vagrant
-    mode: 0644
-  when: not conf_file.stat.exists
-  tags: bundle
-
-- name: Add a line to a file if the file does not exist, without passing regexp
-  ansible.builtin.lineinfile:
-    path: /home/vagrant/.bundle/config
-    line: 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries"'
-    create: yes
-  when: conf_file.stat.exists
-  tags: bundle
-
-
-# - name: Ensure bundle clean in ruby-app dir is set to false 
-#   ansible.builtin.lineinfile:
-#     path: /home/vagrant/apps/ruby-app/.bundle/config
-#     regexp: '^BUNDLE_CLEAN='
-#     line: 'BUNDLE_CLEAN: "false"'
-#   tags: bundle
-
-# - name: Bundle config
-#   ansible.builtin.shell:
-#     bundle config build.nokogiri --use-system-libraries
-#   args:
-#     chdir: /home/vagrant/apps/ruby-app
-
-
-- name: Bundle install
-  community.general.bundler:
-    state: present
-    exclude_groups: development
-#    clean: yes
-    gemfile: /home/vagrant/apps/ruby-app/Gemfile
-  tags: bundle
-
-# - name: Bundle install
-#   ansible.builtin.shell:
-#     bundle install --clean --no-cache --without development
-#   args:
-#     chdir: /home/vagrant/apps/ruby-app
-#   ignore_errors: yes
+- name: Include bundle task list
+  ansible.builtin.include_tasks: bundle.yml
   
 - name: Change the httpd_t domain to permissive
   become: yes

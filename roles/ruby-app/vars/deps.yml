@@ -1,0 +1,15 @@
+# YUM deps to be installed for ruby-app.
+# epel-release is actually a repo.
+# policycoreutils-python is requred to manage SElinux for nginx to work correctly
+# mc is for debugging purposes.
+
+packages:
+  - epel-release
+  - "@Development Tools"
+  - libxml2-devel
+  - libxslt-devel
+  - libpqxx-devel
+  - git
+  - nodejs
+  - policycoreutils-python
+  - mc

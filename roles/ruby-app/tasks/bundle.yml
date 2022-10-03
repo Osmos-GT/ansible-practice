@@ -1,0 +1,38 @@
+---
+- name: Create .bundle dir if it does not exist already
+  ansible.builtin.file:
+    path: /home/vagrant/.bundle
+    state: directory
+    mode: '0755'
+  tags: bundle
+
+- name: Check that bundle config file exists
+  ansible.builtin.stat:
+    path: /home/vagrant/.bundle/config
+  register: conf_file
+  tags: bundle
+
+- name: Copy bundle config in case it doesn't exist already
+  ansible.builtin.copy:
+    src: files/bundle_config
+    dest: /home/vagrant/.bundle/config
+    owner: vagrant
+    group: vagrant
+    mode: 0644
+  when: not conf_file.stat.exists
+  tags: bundle
+
+- name: Add a line to a file if the file exists
+  ansible.builtin.lineinfile:
+    path: /home/vagrant/.bundle/config
+    line: 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries"'
+    create: yes
+  when: conf_file.stat.exists
+  tags: bundle
+
+- name: Bundle install
+  community.general.bundler:
+    state: present
+    exclude_groups: development
+    gemfile: /home/vagrant/apps/ruby-app/Gemfile
+  tags: bundle
